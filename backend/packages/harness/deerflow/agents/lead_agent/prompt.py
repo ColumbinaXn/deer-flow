@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from functools import lru_cache
 
-from deerflow.config.agents_config import load_agent_soul
+from deerflow.config.agents_config import load_agent_soul, load_user_md
 from deerflow.skills import load_skills
 from deerflow.subagents import get_available_subagent_names
 
@@ -198,6 +198,9 @@ You are {agent_name}, an open-source super agent.
 </role>
 
 {soul}
+
+{user}
+
 {memory_context}
 
 <thinking_style>
@@ -477,7 +480,15 @@ def get_agent_soul(agent_name: str | None) -> str:
     # Append SOUL.md (agent personality) if present
     soul = load_agent_soul(agent_name)
     if soul:
-        return f"<soul>\n{soul}\n</soul>\n" if soul else ""
+        return f"<soul>\n{soul}\n</soul>" if soul else ""
+    return ""
+
+
+def get_user_md() -> str:
+    # Append USER.md (global)
+    user = load_user_md()
+    if user:
+        return f"<user>\n{user}\n</user>" if user else ""
     return ""
 
 
@@ -589,6 +600,7 @@ def apply_prompt_template(subagent_enabled: bool = False, max_concurrent_subagen
     prompt = SYSTEM_PROMPT_TEMPLATE.format(
         agent_name=agent_name or "DeerFlow 2.0",
         soul=get_agent_soul(agent_name),
+        user=get_user_md(),
         skills_section=skills_section,
         deferred_tools_section=deferred_tools_section,
         memory_context=memory_context,

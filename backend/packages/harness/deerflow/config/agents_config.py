@@ -94,6 +94,22 @@ def load_agent_soul(agent_name: str | None) -> str | None:
     return content or None
 
 
+def load_user_md() -> str | None:
+    """Read the USER.md file for a custom agent, if it exists.
+
+    USER.md defines the agent's personality, values, and behavioral guardrails.
+    It is injected into the lead agent's system prompt as additional context.
+
+    Returns:
+        The USER.md content as a string, or None if the file does not exist.
+    """
+    user_path = get_paths().user_md_file
+    if not user_path.exists():
+        return None
+    content = user_path.read_text(encoding="utf-8").strip()
+    return content or None
+
+
 def list_custom_agents() -> list[AgentConfig]:
     """Scan the agents directory and return all valid custom agents.
 

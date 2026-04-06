@@ -208,9 +208,9 @@ class LocalSandbox(Sandbox):
     @staticmethod
     def _get_shell() -> str:
         """Detect available shell executable with fallback."""
-        shell = LocalSandbox._find_first_available_shell(("/bin/zsh", "/bin/bash", "/bin/sh", "sh"))
-        if shell is not None:
-            return shell
+        # shell = LocalSandbox._find_first_available_shell(("/bin/zsh", "/bin/bash", "/bin/sh", "sh"))
+        # if shell is not None:
+        #     return shell
 
         if os.name == "nt":
             system_root = os.environ.get("SystemRoot", r"C:\Windows")
@@ -238,6 +238,26 @@ class LocalSandbox(Sandbox):
 
         if os.name == "nt":
             if self._is_powershell(shell):
+                # 适配旧版PowerShell不支持&&/||的问题
+                import re
+                # 获取PowerShell版本
+                version_result = subprocess.run(
+                    [shell, "-NoProfile", "-Command", "$PSVersionTable.PSVersion.Major"],
+                    capture_output=True,
+                    text=True
+                )
+                ps_major_version = int(version_result.stdout.strip()) if version_result.returncode == 0 else 5
+
+                # 版本低于7的话，转换&&和||为PowerShell兼容语法
+                if ps_major_version < 7:
+                    # 替换&&为 ; if ($?) { 结构
+                    resolved_command = re.sub(r"\s*&&\s*", " ; if ($?) { ", resolved_command)
+                    # 替换||为 ; if (-not $?) { 结构
+                    resolved_command = re.sub(r"\s*\|\|\s*", " ; if (-not $?) { ", resolved_command)
+                    # 补充结尾的}（假设命令中没有嵌套的&&/||组合，简单场景足够用）
+                    open_braces = resolved_command.count("{") - resolved_command.count("}")
+                    resolved_command += " }" * open_braces
+
                 args = [shell, "-NoProfile", "-Command", resolved_command]
             elif self._is_cmd_shell(shell):
                 args = [shell, "/c", resolved_command]

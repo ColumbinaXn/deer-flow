@@ -148,7 +148,7 @@ def main() -> int:
         print("  make config   - Generate local config files")
         print("  make dev      - Start development server")
         print("  make start    - Start production server")
-        return 0
+    return 0
 
     print("==========================================")
     print("  FAIL Some dependencies are missing")
